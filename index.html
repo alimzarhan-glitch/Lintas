@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#183b65">
+  <title>Lintas — Pelaporan Rambu Jalan</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#" aria-label="Lintas beranda">
+        <span class="brand-mark"><i class="fa-solid fa-triangle-exclamation"></i></span>
+        <span><strong>Lintas</strong><small>Pelaporan Rambu Jalan</small></span>
+      </a>
+
+      <div class="sidebar-label">MENU UTAMA</div>
+      <nav class="sidebar-nav" aria-label="Navigasi utama">
+        <button class="nav-item active" data-view="mapView"><i class="fa-solid fa-map"></i><span>Peta</span></button>
+        <button class="nav-item" data-view="reportsView"><i class="fa-solid fa-file-lines"></i><span>Laporan</span><span class="nav-count" id="sidebarReportCount">3</span></button>
+        <button class="nav-item" data-view="signsView"><i class="fa-solid fa-traffic-light"></i><span>Data Rambu</span></button>
+        <button class="nav-item" data-view="statsView"><i class="fa-solid fa-chart-column"></i><span>Statistik</span></button>
+      </nav>
+
+      <div class="sidebar-note">
+        <span class="note-icon"><i class="fa-solid fa-shield-halved"></i></span>
+        <div><strong>Pelaporan terbuka</strong><p>Tanpa akun. Bantu membuat jalan lebih aman.</p></div>
+      </div>
+      <div class="sidebar-footer"><span class="status-dot"></span> Layanan publik anonim</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenuButton" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" id="searchInput" placeholder="Cari lokasi, nama jalan, atau rambu..." autocomplete="off">
+          <button id="searchButton" class="search-submit">Cari</button>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" id="addReportButton" class="add-report-btn"><i class="fa-solid fa-plus"></i><span>Tambah Laporan</span></button>
+          <div class="notification-wrap">
+            <button type="button" class="notification-btn" id="notificationButton" aria-label="Aktivitas terbaru"><i class="fa-regular fa-bell"></i><span class="notification-dot" id="notificationDot"></span></button>
+            <div class="notification-popover" id="notificationPopover" hidden>
+              <div class="popover-heading"><strong>Aktivitas terbaru</strong><span class="live-label">LIVE</span></div>
+              <div id="notificationList" class="notification-list"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="page-view active" id="mapView">
+        <div class="map-toolbar">
+          <div class="map-legend">
+            <span><i class="legend-dot severe"></i> Rusak berat</span>
+            <span><i class="legend-dot repair"></i> Perlu perbaikan</span>
+            <span><i class="legend-dot normal"></i> Normal</span>
+          </div>
+          <div class="map-tools">
+            <button class="tool-btn" id="locateButton"><i class="fa-solid fa-location-crosshairs"></i><span>Lokasi saya</span></button>
+            <button class="tool-btn" id="resetMapButton"><i class="fa-solid fa-arrow-rotate-left"></i><span>Reset peta</span></button>
+          </div>
+        </div>
+        <div class="map-container"><div id="map" aria-label="Peta lokasi rambu"></div>
+          <div class="map-hint"><i class="fa-solid fa-hand-pointer"></i> Pilih penanda untuk melihat detail, atau klik peta saat formulir dibuka untuk memilih lokasi.</div>
+        </div>
+        <div class="map-bottom-row">
+          <div><strong id="mapReportCount">3 laporan terdata</strong><span>Data contoh untuk pratinjau</span></div>
+          <button class="text-button" data-view-link="reportsView">Lihat semua laporan <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </section>
+
+      <section class="page-view" id="reportsView">
+        <div class="page-heading"><div><span class="eyebrow">TRANSPARANSI PUBLIK</span><h1>Daftar Laporan</h1><p>Lihat laporan kerusakan rambu dan perkembangan penanganannya.</p></div><button class="add-report-btn" data-open-report><i class="fa-solid fa-plus"></i> Tambah Laporan</button></div>
+        <div class="filter-row"><div class="filter-search"><i class="fa-solid fa-magnifying-glass"></i><input id="reportFilterInput" placeholder="Cari jenis atau deskripsi laporan..."></div><select id="statusFilter" aria-label="Filter status"><option value="">Semua status</option><option>Menunggu Verifikasi</option><option>Diproses</option><option>Selesai</option></select></div>
+        <div class="report-list" id="reportList"></div>
+      </section>
+
+      <section class="page-view" id="signsView">
+        <div class="page-heading"><div><span class="eyebrow">INFORMASI LAPANGAN</span><h1>Data Rambu</h1><p>Ringkasan rambu yang tercatat dalam prototipe ini.</p></div></div>
+        <div class="summary-grid" id="signSummary"></div>
+        <div class="content-card"><div class="card-heading"><h2>Rambu pada peta</h2><span class="muted">Data contoh</span></div><div id="signList" class="simple-list"></div></div>
+      </section>
+
+      <section class="page-view" id="statsView">
+        <div class="page-heading"><div><span class="eyebrow">RINGKASAN DATA</span><h1>Statistik Laporan</h1><p>Gambaran kondisi laporan yang tersimpan pada sesi browser ini.</p></div></div>
+        <div class="summary-grid" id="statsSummary"></div>
+        <div class="content-card"><div class="card-heading"><h2>Status laporan</h2><span class="muted">Diperbarui otomatis</span></div><div id="statusBars" class="status-bars"></div></div>
+        <p class="privacy-note"><i class="fa-solid fa-circle-info"></i> Statistik ini berasal dari data contoh dan laporan yang kamu tambahkan pada browser ini. Belum menjadi data pemerintah atau data publik bersama.</p>
+      </section>
+    </main>
+  </div>
+
+  <div class="report-overlay" id="reportOverlay"></div>
+  <aside class="report-panel" id="reportPanel" aria-labelledby="reportPanelTitle" aria-hidden="true">
+    <div class="report-panel-header">
+      <div><span class="eyebrow">PELAPORAN ANONIM</span><h2 id="reportPanelTitle">Tambah Laporan</h2><p>Bantu tandai rambu yang membutuhkan perhatian.</p></div>
+      <button type="button" id="closeReportButton" class="close-report-btn" aria-label="Tutup formulir"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="reportForm">
+      <label for="namaRambu">Jenis rambu <span>*</span></label>
+      <select id="namaRambu" required>
+        <option value="">Pilih jenis rambu</option><option>Rambu Peringatan</option><option>Rambu Larangan</option><option>Rambu Perintah</option><option>Rambu Petunjuk</option><option>Rambu Lainnya</option>
+      </select>
+      <label for="kondisiRambu">Kondisi rambu <span>*</span></label>
+      <select id="kondisiRambu" required>
+        <option value="">Pilih kondisi</option><option>Rusak Berat</option><option>Perlu Perbaikan</option><option>Hilang</option><option>Tertutup</option><option>Normal</option>
+      </select>
+      <label for="deskripsiRambu">Deskripsi kerusakan <span>*</span></label>
+      <textarea id="deskripsiRambu" rows="4" maxlength="500" placeholder="Contoh: tiang miring, warna rambu memudar..." required></textarea>
+      <div class="location-instruction"><i class="fa-solid fa-location-dot"></i><span><strong>Pilih lokasi di peta</strong><small>Klik titik pada peta untuk mengisi koordinat secara otomatis.</small></span></div>
+      <div class="coordinate-display">
+        <div><span>Latitude</span><strong id="latitudeValue">Belum dipilih</strong></div>
+        <div><span>Longitude</span><strong id="longitudeValue">Belum dipilih</strong></div>
+      </div>
+      <input type="hidden" id="reportLatitude"><input type="hidden" id="reportLongitude">
+      <label for="fotoRambu">Foto kerusakan <small>(opsional, pratinjau lokal)</small></label>
+      <input type="file" id="fotoRambu" accept="image/*">
+      <div id="photoPreview" class="photo-preview" hidden></div>
+      <p class="anonymous-note"><i class="fa-solid fa-user-shield"></i> Tidak perlu nama, email, atau akun. Jangan sertakan informasi pribadi di deskripsi.</p>
+      <div class="report-form-actions"><button type="button" id="cancelReportButton" class="secondary-btn">Batal</button><button type="submit" class="submit-report-btn"><i class="fa-solid fa-paper-plane"></i> Kirim Laporan</button></div>
+      <p class="form-footnote">Prototipe: laporan tersimpan sementara di browser ini, belum dikirim ke server.</p>
+    </form>
+  </aside>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
